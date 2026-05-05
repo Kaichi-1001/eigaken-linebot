@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <title>映画研 登録サイト</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .tab { margin-bottom: 20px; }
+    .tab button { padding: 10px; cursor: pointer; }
+    .content { display: none; padding: 15px; border: 1px solid #ccc; }
+    .active { display: block; }
+    .form-group { margin-bottom: 10px; }
+    label { display: inline-block; width: 100px; }
+    input, textarea { width: 200px; }
+    .item-card { border: 1px solid #eee; padding: 10px; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2>映画研 登録サイト</h2>
+  
+  <div class="tab">
+    <button onclick="switchTab('eventTab')">イベント作成・投票</button>
+    <button onclick="switchTab('screeningTab')">上映会作成</button>
+  </div>
+
+  <div id="eventTab" class="content active">
+    <h3>イベント作成</h3>
+    <div class="form-group"><label>タイトル*</label><input type="text" id="evTitle"></div>
+    <div class="form-group"><label>日時*</label><input type="datetime-local" id="evDate"></div>
+    <div class="form-group"><label>詳細</label><textarea id="evDetails"></textarea></div>
+    <div class="form-group"><label>集合時間</label><input type="time" id="evMeet"></div>
+    <div class="form-group"><label>予算</label><input type="text" id="evBudget"></div>
+    <button onclick="submitEvent()">イベント作成</button>
+    <hr>
+    <h3>イベント一覧・投票</h3>
+    <div id="eventList">読み込み中...</div>
+  </div>
+
+  <div id="screeningTab" class="content">
+    <h3>上映会作成</h3>
+    <div class="form-group"><label>見たい映画*</label><input type="text" id="scTitle"></div>
+    <div class="form-group"><label>日時*</label><input type="datetime-local" id="scDate"></div>
+    <button onclick="submitScreening()">上映会追加</button>
+  </div>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      if(tabId === 'eventTab') loadEvents();
+    }
+
+    function submitEvent() {
+      const title = document.getElementById('evTitle').value;
+      const date = document.getElementById('evDate').value;
+      if (!title || !date) return alert('タイトルと日時は必須です');
+      
+      google.script.run.withSuccessHandler(msg => {
+        alert(msg);
+        loadEvents();
+      }).withFailureHandler(err => alert(err.message))
+      .addEvent(title, date, document.getElementById('evDetails').value, document.getElementById('evMeet').value, document.getElementById('evBudget').value);
+    }
+
+    function submitScreening() {
+      const title = document.getElementById('scTitle').value;
+      const date = document.getElementById('scDate').value;
+      if (!title || !date) return alert('必須項目を入力してください');
+
+      google.script.run.withSuccessHandler(msg => alert(msg))
+      .withFailureHandler(err => alert(err.message)) // 重複時にポップアップエラー
+      .addScreening(title, date);
+    }
+
+    function loadEvents() {
+      google.script.run.withSuccessHandler(events => {
+        const html = events.map(e => `
+          <div class="item-card">
+            <strong>${e.title}</strong> (${new Date(e.datetime).toLocaleString()})<br>
+            票数: ${e.votes}票 <button onclick="vote('${e.id}')">投票する</button>
+          </div>
+        `).join('');
+        document.getElementById('eventList').innerHTML = html || 'イベントがありません';
+      }).getEvents();
+    }
+
+    function vote(id) {
+      google.script.run.withSuccessHandler(msg => {
+        alert(msg);
+        loadEvents();
+      }).voteForEvent(id);
+    }
+
+    // 初期読み込み
+    loadEvents();
+  </script>
+</body>
+</html>
