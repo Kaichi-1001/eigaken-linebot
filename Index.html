@@ -73,15 +73,23 @@
     }
 
     function loadEvents() {
-      google.script.run.withSuccessHandler(events => {
-        const html = events.map(e => `
-          <div class="item-card">
-            <strong>${e.title}</strong> (${new Date(e.datetime).toLocaleString()})<br>
-            票数: ${e.votes}票 <button onclick="vote('${e.id}')">投票する</button>
-          </div>
-        `).join('');
-        document.getElementById('eventList').innerHTML = html || 'イベントがありません';
-      }).getEvents();
+      google.script.run
+        .withSuccessHandler(response => {
+          // 【重要】裏側から送られてきた文字列(JSON)を、配列データに復元する
+          const events = JSON.parse(response);
+          
+          const html = events.map(e => `
+            <div class="item-card">
+              <strong>${e.title}</strong> (${new Date(e.datetime).toLocaleString()})<br>
+              票数: ${e.votes}票 <button onclick="vote('${e.id}')">投票する</button>
+            </div>
+          `).join('');
+          document.getElementById('eventList').innerHTML = html || 'イベントがありません';
+        })
+        .withFailureHandler(err => {
+          document.getElementById('eventList').innerHTML = '<span style="color:red;">エラー: ' + err.message + '</span>';
+        })
+        .getEvents();
     }
 
     function vote(id) {
