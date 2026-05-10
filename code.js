@@ -1,7 +1,7 @@
 // ====== 設定項目 ======
 const SPREADSHEET_ID = '1DVsttehX74SCDrxkNFf2SJXA4uG3C2arPxLVPbF36f4';
 const LINE_ACCESS_TOKEN = 'TmbcHFc6lphQU4IjFHxyHhYKM0VfXDtR6qSUW4ro4XFujnEMSKcREPbC9dNEsbS0KY/ZXlPDcjn/w4/WlPoYGY9U+OJZIV9HkHFpcucjOiLcO1CrJ2OuUQkVij1KLVfm7GGslGLWZksu5pa2iOI0eAdB04t89/1O/w1cDnyilFU=';
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxtZ8FpQpYLphP_Va1J6UNZnieWBElqLz7zA2sGj2alzB71Cm-4j2pFAKq3hGtHi3TU/exec';
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzjZWZFQIEXQHVh4RXZ3YqToVgMsyUKLDeiI_B54h1zcM2fOaUca8KAh94jCoA282P2/exec';
 
 // ====== LINE Webhook処理 ======
 function doPost(e) {
@@ -136,10 +136,18 @@ function getEvents() {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Events');
   const data = sheet.getDataRange().getValues();
   const events = [];
+  
   for (let i = 1; i < data.length; i++) {
-    events.push({ id: data[i][0], title: data[i][1], datetime: data[i][2], votes: data[i][6] });
+    events.push({ 
+      id: data[i][0], 
+      title: data[i][1], 
+      datetime: data[i][2], // JSON.stringifyが自動で安全な形式にしてくれます
+      votes: data[i][6] 
+    });
   }
-  return events;
+  
+  // 【重要】配列をそのまま返さず、安全な文字列(JSON)に変換して返す！
+  return JSON.stringify(events);
 }
 
 // 投票処理
