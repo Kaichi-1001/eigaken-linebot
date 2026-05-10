@@ -6,21 +6,25 @@
   <style>
     body { font-family: sans-serif; padding: 20px; }
     .tab { margin-bottom: 20px; }
-    .tab button { padding: 10px; cursor: pointer; }
-    .content { display: none; padding: 15px; border: 1px solid #ccc; }
+    .tab button { padding: 10px; cursor: pointer; border: 1px solid #ccc; background: #f9f9f9; }
+    .tab button.active-btn { background: #007bff; color: white; border-color: #007bff; }
+    .content { display: none; padding: 15px; border: 1px solid #ccc; background: #fff; }
     .active { display: block; }
     .form-group { margin-bottom: 10px; }
-    label { display: inline-block; width: 100px; }
-    input, textarea { width: 200px; }
-    .item-card { border: 1px solid #eee; padding: 10px; margin-bottom: 10px; }
+    label { display: inline-block; width: 100px; font-weight: bold; }
+    input, textarea { width: 200px; padding: 5px; }
+    .item-card { border: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-radius: 5px; background: #fafafa; }
+    .vote-btn { background: #28a745; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px; }
+    .vote-btn:disabled { background: #6c757d; cursor: not-allowed; }
+    .unvote-btn { background: #dc3545; color: white; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px; }
   </style>
 </head>
 <body>
   <h2>映画研 登録サイト</h2>
   
   <div class="tab">
-    <button onclick="switchTab('eventTab')">イベント作成・投票</button>
-    <button onclick="switchTab('screeningTab')">上映会作成</button>
+    <button id="btn-eventTab" class="active-btn" onclick="switchTab('eventTab')">イベント作成・投票</button>
+    <button id="btn-screeningTab" onclick="switchTab('screeningTab')">上映会作成</button>
   </div>
 
   <div id="eventTab" class="content active">
@@ -29,8 +33,8 @@
     <div class="form-group"><label>日時*</label><input type="datetime-local" id="evDate"></div>
     <div class="form-group"><label>詳細</label><textarea id="evDetails"></textarea></div>
     <div class="form-group"><label>集合時間</label><input type="time" id="evMeet"></div>
-    <div class="form-group"><label>予算</label><input type="text" id="evBudget"></div>
-    <button onclick="submitEvent()">イベント作成</button>
+    <div class="form-group"><label>予算</label><input type="text" id="evBudget" placeholder="例: 1000円"></div>
+    <button onclick="submitEvent()" style="padding: 8px 15px;">イベント作成</button>
     <hr>
     <h3>イベント一覧・投票</h3>
     <div id="eventList">読み込み中...</div>
@@ -40,13 +44,17 @@
     <h3>上映会作成</h3>
     <div class="form-group"><label>見たい映画*</label><input type="text" id="scTitle"></div>
     <div class="form-group"><label>日時*</label><input type="datetime-local" id="scDate"></div>
-    <button onclick="submitScreening()">上映会追加</button>
+    <button onclick="submitScreening()" style="padding: 8px 15px;">上映会追加</button>
   </div>
 
   <script>
     function switchTab(tabId) {
       document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
+      
+      document.querySelectorAll('.tab button').forEach(el => el.classList.remove('active-btn'));
+      document.getElementById('btn-' + tabId).classList.add('active-btn');
+
       if(tabId === 'eventTab') loadEvents();
     }
 
@@ -57,6 +65,12 @@
       
       google.script.run.withSuccessHandler(msg => {
         alert(msg);
+        // 入力欄をクリア
+        document.getElementById('evTitle').value = '';
+        document.getElementById('evDate').value = '';
+        document.getElementById('evDetails').value = '';
+        document.getElementById('evMeet').value = '';
+        document.getElementById('evBudget').value = '';
         loadEvents();
       }).withFailureHandler(err => alert(err.message))
       .addEvent(title, date, document.getElementById('evDetails').value, document.getElementById('evMeet').value, document.getElementById('evBudget').value);
@@ -67,23 +81,39 @@
       const date = document.getElementById('scDate').value;
       if (!title || !date) return alert('必須項目を入力してください');
 
-      google.script.run.withSuccessHandler(msg => alert(msg))
-      .withFailureHandler(err => alert(err.message)) // 重複時にポップアップエラー
+      google.script.run.withSuccessHandler(msg => {
+        alert(msg);
+        document.getElementById('scTitle').value = '';
+        document.getElementById('scDate').value = '';
+      }).withFailureHandler(err => alert(err.message))
       .addScreening(title, date);
     }
 
     function loadEvents() {
       google.script.run
         .withSuccessHandler(response => {
-          // 【重要】裏側から送られてきた文字列(JSON)を、配列データに復元する
           const events = JSON.parse(response);
+          // ブラウザの手軽な保存領域（LocalStorage）から投票済みIDを取得
+          const localVoted = JSON.parse(localStorage.getItem('votedEvents') || '[]');
           
-          const html = events.map(e => `
-            <div class="item-card">
-              <strong>${e.title}</strong> (${new Date(e.datetime).toLocaleString()})<br>
-              票数: ${e.votes}票 <button onclick="vote('${e.id}')">投票する</button>
-            </div>
-          `).join('');
+          const html = events.map(e => {
+            // Googleアカウントで投票済み、またはブラウザの履歴で投票済みの場合はボタンを無効化
+            const isVoted = localVoted.includes(e.id);
+            const btnHtml = isVoted 
+              ? `<button class="unvote-btn" onclick="unvote('${e.id}')">取り消す</button>` 
+              : `<button class="vote-btn" onclick="vote('${e.id}')">投票する</button>`;
+
+            return `
+              <div class="item-card">
+                <div style="font-size: 1.1em; margin-bottom: 5px;"><strong>${e.title}</strong></div>
+                <div style="color: #555; margin-bottom: 10px;">日時: ${new Date(e.datetime).toLocaleString('ja-JP')}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="font-weight: bold; color: #d9534f;">現在の票数: ${e.votes}票</span>
+                  ${btnHtml}
+                </div>
+              </div>
+            `;
+          }).join('');
           document.getElementById('eventList').innerHTML = html || 'イベントがありません';
         })
         .withFailureHandler(err => {
@@ -93,13 +123,34 @@
     }
 
     function vote(id) {
+      if(!confirm("このイベントに投票しますか？（1人1回まで）")) return;
+
       google.script.run.withSuccessHandler(msg => {
         alert(msg);
+        const localVoted = JSON.parse(localStorage.getItem('votedEvents') || '[]');
+        localVoted.push(id);
+        localStorage.setItem('votedEvents', JSON.stringify(localVoted));
         loadEvents();
+      }).withFailureHandler(err => {
+        alert(err.message);
       }).voteForEvent(id);
     }
 
-    // 初期読み込み
+    function unvote(id) {
+      if(!confirm("投票を取り消しますか？")) return;
+
+      google.script.run.withSuccessHandler(msg => {
+        alert(msg);
+        // ブラウザの記録からこのイベントのIDを削除する
+        let localVoted = JSON.parse(localStorage.getItem('votedEvents') || '[]');
+        localVoted = localVoted.filter(votedId => votedId !== id);
+        localStorage.setItem('votedEvents', JSON.stringify(localVoted));
+        loadEvents();
+      }).withFailureHandler(err => {
+        alert(err.message);
+      }).unvoteForEvent(id);
+    }
+
     loadEvents();
   </script>
 </body>
