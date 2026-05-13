@@ -1,7 +1,7 @@
 // ====== 設定項目 ======
-const SPREADSHEET_ID = '1QEY3MVQ4x02v_o9_QWwgqUymbQ_P-umS3g32W53NAOI';
-const LINE_ACCESS_TOKEN = 'L8eSF7C0m4I0eD8v2v5WP7QERvUOKwhpBZtjojnXI8lpKQTZk3Wh+kIp6A8YUxTQKY/ZXlPDcjn/w4/WlPoYGY9U+OJZIV9HkHFpcucjOiIdN6utVaEH+8h1FlZyX/Mol5LKFhL/nQJlYdhNQWAekQdB04t89/1O/w1cDnyilFU=';
-const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzy-NEsNuUi9izcVS4QOnFLIe_YAY8gYGaC2TAzk6Kq4aYLFjluOmuW4DvE4gIrSBR4/exec';
+const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('ssid'); 
+const LINE_ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty('LINE_ACCESS_TOKEN');
+const WEB_APP_URL = PropertiesService.getScriptProperties().getProperty('web_url');
 
 // ====== 環境初期化（最初に1回だけ実行する関数） ======
 function setupEnvironment() {
