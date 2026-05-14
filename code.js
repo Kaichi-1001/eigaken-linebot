@@ -2,6 +2,7 @@
 const SPREADSHEET_ID = PropertiesService.getScriptProperties().getProperty('ssid'); 
 const LINE_ACCESS_TOKEN = PropertiesService.getScriptProperties().getProperty('LINE_ACCESS_TOKEN');
 const WEB_APP_URL = PropertiesService.getScriptProperties().getProperty('web_url');
+const ADMIN_EMAIL = PropertiesService.getScriptProperties().getProperty('admin_email');
 
 // ====== 環境初期化（最初に1回だけ実行する関数） ======
 function setupEnvironment() {
@@ -72,23 +73,44 @@ function broadcastToGroups(text) {
 
 // ====== 定期実行トリガー ======
 function trigger_1st_EventAnnounce() {
-  broadcastToGroups(`【お知らせ】\n来月のイベント作成期間が始まりました！\n以下のURLからイベントの提案と投票を行ってください。\n${WEB_APP_URL}`);
+  const subject = "【映画研LINEBot】1日のグループ送信のお願い";
+  const body = `映画研LINEBotです。1日になりました。以下の文章をコピーして映画研グループに貼り付けてください。\n\n翌月のイベント作成、投票期間がスタートしました。以下のURLから作成を行ってください。\n${WEB_APP_URL}`;
+
+  GmailApp.sendEmail(ADMIN_EMAIL, subject, body);
 }
 
 function trigger_11th_ScreeningAnnounce() {
-  broadcastToGroups(`【お知らせ】\n来月の上映会登録期間が始まりました！\n以下のURLから見たい映画を登録してください。\n${WEB_APP_URL}`);
+  const now = new Date();
+  const n = now.getMonth() + 1; // 現在の月(1〜12)
+  const targetMonth = (n + 1) % 12 + 1; // 12月の場合は1月にする計算
+
+  const subject = "【映画研LINEBot】11日のグループ送信のお願い";
+  const body = `映画研LINEBotです。\n11日になりました。以下の文章をコピーしてグループに張り付けて送信してください。\n\n${targetMonth}月の上映会作成がスタートしました。以下のURLから作成を行ってください。\n${WEB_APP_URL}`;
+
+  GmailApp.sendEmail(ADMIN_EMAIL, subject, body);
 }
 
 function trigger_9th_ScreeningClose() {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Screenings');
   const data = sheet.getDataRange().getValues();
+  
+  let listText = "";
   if (data.length <= 1) {
-    broadcastToGroups("今月の上映会は登録されていません。");
-    return;
+    listText = "今月の上映会は登録されていません。\n";
+  } else {
+    for (let i = 1; i < data.length; i++) {
+      let title = data[i][1];
+      let dateObj = new Date(data[i][2]);
+      // 日付を yyyy/MM/dd 形式に変換
+      let dateStr = Utilities.formatDate(dateObj, 'JST', 'yyyy/MM/dd');
+      listText += `"${title}" ${dateStr}\n`;
+    }
   }
-  let text = "【上映会一覧（確定）】\n";
-  for (let i = 1; i < data.length; i++) text += `・${data[i][1]} (${data[i][2]})\n`;
-  broadcastToGroups(text);
+
+  const subject = "【映画研LINEBot】9日の上映会リストと予約のお願い";
+  const body = `${listText}\n講義室予約を教務webから行い、このリストをグループで送信して告知してください。`;
+
+  GmailApp.sendEmail(ADMIN_EMAIL, subject, body);
 }
 
 function trigger_15th_EventDecision() {
@@ -106,7 +128,11 @@ function trigger_15th_EventDecision() {
   }
   
   if (bestEvent) {
-    broadcastToGroups(`【イベント決定！】\n来月のイベントが決定しました！\nタイトル: ${bestEvent[1]}\n日時: ${bestEvent[2]}\n詳細: ${bestEvent[3]}\n集合時間: ${bestEvent[4]}\n予算: ${bestEvent[5]}\n獲得票数: ${bestEvent[6]}票`);
+    let dateObj = new Date(bestEvent[2]);
+    // 日付を yyyy/mm/dd time 形式に変換
+    let dateStr = Utilities.formatDate(dateObj, 'JST', 'yyyy/MM/dd HH:mm');
+    
+    broadcastToGroups(`【イベント決定！】\n来月のイベントが決定しました！\nタイトル: ${bestEvent[1]}\n日時: ${dateStr}\n詳細: ${bestEvent[3]}\n集合時間: ${bestEvent[4]}\n予算: ${bestEvent[5]}\n獲得票数: ${bestEvent[6]}票\n\nイベント作成者は、ノートを作成してください！`);
   } else {
     broadcastToGroups("【お知らせ】\n5票以上のイベントがなかったため、来月のイベントは見送りとなりました。");
   }
