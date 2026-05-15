@@ -35,7 +35,7 @@ function doPost(e) {
     if (event.type === 'join' && (event.source.type === 'group' || event.source.type === 'room')) {
       const groupId = event.source.groupId || event.source.roomId;
       sheet.appendRow([groupId]);
-      pushMessage(groupId, "映画研LineBotです！登録完了しました。");
+      GmailApp.sendEmail(ADMIN_EMAIL, "新しいグループに参加しました！", `グループID: ${groupId} に参加しました。`);
     }
   });
   return ContentService.createTextOutput(JSON.stringify({content: "ok"})).setMimeType(ContentService.MimeType.JSON);
