@@ -1,0 +1,135 @@
+### General and OS Files ###
+# 共通で無視すべきファイル
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Build Artifacts and Logs ###
+# ビルド成果物・ログ・一時ファイル
+*.log
+*.bak
+*.swp
+*.swo
+*.obj
+*.exe
+*.dll
+*.so
+*.o
+*.a
+*.out
+
+### IDE and Editor Files ###
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+# JetBrains IDEs (IntelliJ, PyCharm, etc.)
+.idea/
+# Visual Studio
+*.vs/
+
+### Python ###
+# Pythonコンパイル済みファイル
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+# 仮想環境
+venv/
+env/
+pip-wheel-metadata/
+.venv/
+# テスト・ドキュメント関連
+.pytest_cache/
+htmlcov/
+.tox/
+
+### C/C++ ###
+# ビルド関連
+/build/
+/bin/
+*.swp
+*.user
+*.suo
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+### LaTeX / LuaLaTeX ###
+# TeXコンパイル生成ファイル
+*.pdf
+!figure/*.pdf
+*.aux
+*.bcf
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.synctex(busy).gz
+*.synctex(busy)
+*.toc
+*.nav
+*.snm
+*.dvi
+*.ps
+*.gz
+*.xdv
+*.lof
+*.lot
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.ist
+*.gls
+*.idx
+*.ind
+*.ilg
+*.xmp
+*.maf
+*.mtc*
+*.sav
+*.tdo
+*.thm
+*.ttt
+*.vrb
+*.syd
+*.bak
+*.ltx
+*.bbl-SAVE-ERROR
+*.bcf-SAVE-ERROR
+
+### TypeScript / JavaScript (Node.js) ###
+node_modules/
+jspm_packages/
+dist/
+out/
+lib/
+*.tsbuildinfo
+.npm
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### Google Apps Script (clasp) ###
+.clasprc.json
+!.clasp.json
+.claspignore
