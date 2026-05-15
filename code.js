@@ -73,6 +73,8 @@ function broadcastToGroups(text) {
 
 // ====== 定期実行トリガー ======
 function trigger_1st_EventAnnounce() {
+  clearSheetData('Events');
+
   const subject = "【映画研LINEBot】1日のグループ送信のお願い";
   const body = `映画研LINEBotです。1日になりました。以下の文章をコピーして映画研グループに貼り付けてください。\n\n翌月のイベント作成、投票期間がスタートしました。以下のURLから作成を行ってください。\n${WEB_APP_URL}`;
 
@@ -80,6 +82,8 @@ function trigger_1st_EventAnnounce() {
 }
 
 function trigger_11th_ScreeningAnnounce() {
+  clearSheetData('Screenings');
+
   const now = new Date();
   const n = now.getMonth() + 1; // 現在の月(1〜12)
   const targetMonth = (n + 1) % 12 + 1; // 12月の場合は1月にする計算
@@ -207,4 +211,15 @@ function unvoteForEvent(id) {
     }
   }
   throw new Error("イベントが見つかりません");
+}
+
+function clearSheetData(sheetName) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(sheetName);
+  const lastRow = sheet.getLastRow();
+  
+  // データがある場合のみ削除（1行目はヘッダーなので残す）
+  if (lastRow > 1) {
+    sheet.deleteRows(2, lastRow - 1);
+  }
 }
