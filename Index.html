@@ -45,6 +45,11 @@
     <div class="form-group"><label>見たい映画*</label><input type="text" id="scTitle"></div>
     <div class="form-group"><label>日時*</label><input type="datetime-local" id="scDate"></div>
     <button onclick="submitScreening()" style="padding: 8px 15px;">上映会追加</button>
+
+    <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+      <h3 style="font-size: 1.1em; color: #555;">現在追加されている上映会</h3>
+      <div id="screeningList" style="font-size: 0.9em;">読み込み中...</div>
+    </div>
   </div>
 
   <script>
@@ -56,6 +61,7 @@
       document.getElementById('btn-' + tabId).classList.add('active-btn');
 
       if(tabId === 'eventTab') loadEvents();
+      if(tabId === 'screeningTab') loadScreenings();
     }
 
     function submitEvent() {
@@ -85,6 +91,7 @@
         alert(msg);
         document.getElementById('scTitle').value = '';
         document.getElementById('scDate').value = '';
+        loadScreenings();
       }).withFailureHandler(err => alert(err.message))
       .addScreening(title, date);
     }
@@ -120,6 +127,29 @@
           document.getElementById('eventList').innerHTML = '<span style="color:red;">エラー: ' + err.message + '</span>';
         })
         .getEvents();
+    }
+
+    function loadScreenings() {
+      google.script.run
+      .withSuccessHandler(data => {
+      const screenings = JSON.parse(data);
+      const listDiv = document.getElementById('screeningList');
+      
+      if (screenings.length === 0) {
+        listDiv.innerHTML = '<p style="color:#999;">登録されている上映会はありません。</p>';
+        return;
+      }
+      
+      const html = screenings.map(s => `
+        <div class="item-card" style="padding: 10px; margin-bottom: 8px;">
+          <div style="font-weight: bold;">${s.title}</div>
+          <div style="color: #666;">📅 ${s.datetime}</div>
+        </div>
+      `).join('');
+      
+      listDiv.innerHTML = html;
+      })
+      .getScreenings();
     }
 
     function vote(id) {

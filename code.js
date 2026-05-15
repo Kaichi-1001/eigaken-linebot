@@ -223,3 +223,30 @@ function clearSheetData(sheetName) {
     sheet.deleteRows(2, lastRow - 1);
   }
 }
+
+function getScreenings() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Screenings');
+  
+  // シートにデータがない、またはヘッダーしかない場合
+  if (!sheet || sheet.getLastRow() < 2) return JSON.stringify([]);
+  
+  const data = sheet.getDataRange().getValues();
+  let screenings = [];
+  
+  // 2行目からループ
+  for (let i = 1; i < data.length; i++) {
+    if (!data[i][1]) continue; // タイトルがない場合はスキップ
+    
+    screenings.push({
+      id: data[i][0],
+      title: data[i][1],
+      // 日付を読みやすい文字列に変換
+      datetime: data[i][2] instanceof Date 
+        ? Utilities.formatDate(data[i][2], "JST", "yyyy/MM/dd HH:mm") 
+        : String(data[i][2])
+    });
+  }
+  
+  return JSON.stringify(screenings);
+}
